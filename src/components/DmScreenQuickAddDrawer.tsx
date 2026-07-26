@@ -59,7 +59,7 @@ interface AddKindOption {
 }
 
 const ADD_KIND_OPTIONS: readonly AddKindOption[] = [
-  { kind: 'note', label: 'Note', description: 'Reminders or boxed text', icon: FileText },
+  { kind: 'note', label: 'Scratchpad', description: 'Fast notes during play', icon: FileText },
   { kind: 'party', label: 'Party', description: 'Active party at a glance', icon: Users },
   { kind: 'rules', label: 'Rules', description: 'Core table reference', icon: BookOpen },
   { kind: 'monster', label: 'Monster', description: 'Search your bestiary', icon: Skull },
@@ -78,6 +78,7 @@ const FOCUSABLE_SELECTOR = [
 ].join(',');
 
 function addButtonLabel(kind: DmScreenItemKind): string {
+  if (kind === 'note') return 'Add scratchpad';
   if (kind === 'party') return 'Add party panel';
   if (kind === 'rules') return 'Add rules reference';
   if (kind === 'tool') return 'Add tool shortcut';
@@ -109,6 +110,7 @@ export default function DmScreenQuickAddDrawer({
   const drawerRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const newSectionInputRef = useRef<HTMLInputElement>(null);
+  const noteBodyRef = useRef<HTMLTextAreaElement>(null);
   const [newSectionName, setNewSectionName] = useState('');
   const [actionBusy, setActionBusy] = useState(false);
   const [actionError, setActionError] = useState('');
@@ -134,6 +136,12 @@ export default function DmScreenQuickAddDrawer({
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open || addKind !== 'note') return;
+    const frame = window.requestAnimationFrame(() => noteBodyRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [addKind, open]);
+
   if (!open) return null;
 
   const resourceKind = addKind === 'monster' || addKind === 'spell';
@@ -150,6 +158,18 @@ export default function DmScreenQuickAddDrawer({
       event.preventDefault();
       event.stopPropagation();
       onClose();
+      return;
+    }
+
+    if (
+      addKind === 'note'
+      && event.key === 'Enter'
+      && (event.ctrlKey || event.metaKey)
+      && canAddConfiguredItem
+      && !actionBusy
+    ) {
+      event.preventDefault();
+      void addConfiguredItem();
       return;
     }
 
@@ -400,9 +420,12 @@ export default function DmScreenQuickAddDrawer({
                   </label>
 
                   {addKind === 'note' && (
-                    <label className="block text-sm font-semibold">
-                      Note
+                    <div className="block text-sm font-semibold">
+                      <label htmlFor="dm-screen-quick-add-note-body">Scratchpad</label>
                       <textarea
+                        id="dm-screen-quick-add-note-body"
+                        ref={noteBodyRef}
+                        aria-describedby="dm-screen-quick-add-note-keyboard-help"
                         className="mt-1 w-full min-w-0 resize-y"
                         rows={5}
                         value={body}
@@ -410,7 +433,25 @@ export default function DmScreenQuickAddDrawer({
                         placeholder="Rules reminder, boxed text, NPC notes, session beats…"
                         maxLength={200_000}
                       />
-                    </label>
+                      <p id="dm-screen-quick-add-note-keyboard-help" className="mt-1 text-xs font-normal text-[var(--text-3)]">
+                        Enter adds a new line. Press Ctrl+Enter or Command+Enter to add the scratchpad.
+                      </p>
+                      <button
+                        type="button"
+                        className="btn-ghost mt-2 !min-h-9 !px-2 text-xs"
+                        onClick={() => {
+                          const timestamp = new Intl.DateTimeFormat(undefined, {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                          }).format(new Date());
+                          const separator = body.length === 0 || body.endsWith('\n') ? '' : '\n';
+                          onBodyChange(`${body}${separator}${timestamp} — `);
+                          window.requestAnimationFrame(() => noteBodyRef.current?.focus());
+                        }}
+                      >
+                        Add current time
+                      </button>
+                    </div>
                   )}
 
                   {addKind === 'tool' && (

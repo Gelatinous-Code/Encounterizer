@@ -48,7 +48,7 @@ function HandoutBody({ spec }: { spec: HandoutSpec }): JSX.Element {
               <tbody>
                 {spec.items[0].map(anchor => (
                   <tr key={anchor}>
-                    <td className="border px-2 py-1 font-bold">{anchor}</td>
+                    <th scope="row" className="border px-2 py-1 text-left font-bold">{anchor}</th>
                     {spec.categories.slice(1).map(c => (
                       <td key={c} className="border px-2 py-1 min-w-16" />
                     ))}
@@ -96,25 +96,39 @@ function HandoutBody({ spec }: { spec: HandoutSpec }): JSX.Element {
       return (
         <div className="space-y-2">
           <div className="max-w-full overflow-x-auto pb-1" role="region" tabIndex={0} aria-label="Scrollable puzzle diagram">
-            <div className="inline-grid min-w-max gap-1" style={{ gridTemplateColumns: `repeat(${spec.cols}, minmax(2rem, auto))` }}>
-              {spec.cells.map((c, i) => (
-                <div
-                  key={i}
-                  role="img"
-                  aria-label={
-                    c.state === 'on' ? 'lit plate'
-                    : c.state === 'off' ? 'dark plate'
-                    : c.state === 'masked' ? 'empty socket'
-                    : c.label ?? 'tile'
-                  }
-                  className={`aspect-square flex items-center justify-center rounded border text-sm font-bold ${
-                    c.state === 'on' ? 'bg-[var(--bronze)] text-[var(--steel-950)]'
-                    : c.state === 'off' ? 'bg-[var(--steel-950)] text-[var(--text-2)]'
-                    : c.state === 'masked' ? 'border-dashed'
-                    : ''
-                  }`}
-                >
-                  {c.label ?? ''}
+            <div
+              className="inline-grid min-w-max gap-1"
+              style={{ gridTemplateColumns: `repeat(${spec.cols}, minmax(2rem, auto))` }}
+              role="grid"
+              aria-label={`${spec.rows} by ${spec.cols} puzzle diagram`}
+              aria-rowcount={spec.rows}
+              aria-colcount={spec.cols}
+            >
+              {Array.from({ length: spec.rows }, (_, rowIndex) => (
+                <div key={rowIndex} role="row" aria-rowindex={rowIndex + 1} className="contents">
+                  {spec.cells
+                    .slice(rowIndex * spec.cols, (rowIndex + 1) * spec.cols)
+                    .map((c, columnIndex) => (
+                      <div
+                        key={columnIndex}
+                        role="gridcell"
+                        aria-colindex={columnIndex + 1}
+                        aria-label={
+                          c.state === 'on' ? 'lit plate'
+                          : c.state === 'off' ? 'dark plate'
+                          : c.state === 'masked' ? 'empty socket'
+                          : c.label ?? 'tile'
+                        }
+                        className={`aspect-square flex items-center justify-center rounded border text-sm font-bold ${
+                          c.state === 'on' ? 'bg-[var(--bronze)] text-[var(--steel-950)]'
+                          : c.state === 'off' ? 'bg-[var(--steel-950)] text-[var(--text-2)]'
+                          : c.state === 'masked' ? 'border-dashed'
+                          : ''
+                        }`}
+                      >
+                        {c.label ?? ''}
+                      </div>
+                    ))}
                 </div>
               ))}
             </div>

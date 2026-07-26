@@ -47,6 +47,7 @@ import { useCustomMonsters } from '@/app/hooks/useCustomMonsters';
 import { useCustomSpells } from '@/app/hooks/useCustomSpells';
 import { useDmScreenStore } from '@/app/hooks/useDmScreenStore';
 import { useDmScreenFocusMode } from '@/app/hooks/useDmScreenFocusMode';
+import { useNotesLibrary } from '@/app/hooks/useNotesLibrary';
 import { usePartyLibrary } from '@/app/hooks/usePartyLibrary';
 import BattleOrganizer from '@/components/BattleOrganizer';
 import DmScreenBackupPanel from '@/components/DmScreenBackupPanel';
@@ -58,6 +59,7 @@ import DmScreenTemplateChooser, {
   type DmScreenTemplateAction,
 } from '@/components/DmScreenTemplateChooser';
 import DmPartyPanel from '@/components/DmPartyPanel';
+import DmScreenScratchpad from '@/components/DmScreenScratchpad';
 import MonsterStatBlock from '@/components/MonsterStatBlock';
 import RulesReference from '@/components/RulesReference';
 import ToolPageHeader from '@/components/ToolPageHeader';
@@ -105,6 +107,17 @@ import {
 } from '@/lib/dm-screen-templates';
 import { getActiveParty } from '@/lib/party';
 import { partyToDmScreenSummary } from '@/lib/party-adapters';
+import {
+  createNote,
+  type NoteLibrary,
+  type NoteRecord,
+} from '@/lib/notes';
+import { planDmScreenNoteMigration } from '@/lib/notes-dm-screen';
+import {
+  NoteStorageError,
+  type NoteRepositoryStatus,
+  type NoteWriteResult,
+} from '@/lib/notes-repository';
 import { DM_SCREEN_DEFAULT_TOOL_PATH, DM_SCREEN_TOOL_ROUTES } from '@/lib/site';
 import type { Monster } from '@/lib/types';
 import { usePersistentState } from '@/lib/use-persistent-state';
@@ -283,6 +296,43 @@ export default function DmScreenPage() {
     hydrated: partyLibraryHydrated,
     status: partyLibraryStatus,
   } = usePartyLibrary();
+  const {
+    library: notesLibrary,
+    hydrated: notesHydrated,
+    status: notesStatus,
+    error: notesError,
+    warnings: notesWarnings,
+    updateNotes,
+  } = useNotesLibrary();
+  const noteMap = useMemo(
+    () => new Map((notesLibrary?.notes ?? []).map((note) => [note.id, note])),
+    [notesLibrary],
+  );
+  const saveScratchpad = useCallback((
+    noteId: string,
+    nextBody: string,
+  ): Promise<NoteWriteResult> => {
+    if (!notesLibrary?.notes.some((note) => note.id === noteId)) {
+      return Promise.resolve({
+        ok: false,
+        error: new NoteStorageError(
+          'invalid-document',
+          'This scratchpad is no longer available in the Notes Library.',
+        ),
+      });
+    }
+    return updateNotes((current) => {
+      const index = current.notes.findIndex((note) => note.id === noteId);
+      if (index < 0 || current.notes[index].body === nextBody) return current;
+      const savedAt = Math.max(Date.now(), current.notes[index].updatedAt);
+      return {
+        ...current,
+        notes: current.notes.map((note, noteIndex) => noteIndex === index
+          ? { ...note, body: nextBody, updatedAt: savedAt }
+          : note),
+      };
+    });
+  }, [notesLibrary, updateNotes]);
   const activeParty = partyLibrary ? getActiveParty(partyLibrary) : null;
   const currentPartySummary = useMemo(
     () => activeParty ? partyToDmScreenSummary(activeParty) : null,
@@ -344,6 +394,11 @@ export default function DmScreenPage() {
   const pendingStashButtonFocusRef = useRef(false);
   const templateNoticeRef = useRef<HTMLDivElement>(null);
   const sawReplacementUndo = useRef(false);
+  const noteMigrationRunningRef = useRef(false);
+  const quickNoteDraftRef = useRef<{
+    noteId: string;
+    panelId: string;
+  } | null>(null);
   const {
     focusButtonRef,
     focused: screenFocused,
@@ -485,6 +540,64 @@ export default function DmScreenPage() {
     setScreen((current) => syncDmPartySnapshot(current, currentPartySummary));
   }, [containsPartyItem, currentPartySummary, partyLibraryCanRefresh, screenAvailable, setScreen]);
 
+  useEffect(() => {
+    if (
+      !screen
+      || !notesHydrated
+      || !notesLibrary
+      || notesStatus !== 'saved'
+      || noteMigrationRunningRef.current
+    ) return;
+    const initialPlan = planDmScreenNoteMigration(screen, notesLibrary);
+    if (
+      initialPlan.createdNoteIds.length === 0
+      && initialPlan.linkedPanelIds.length === 0
+    ) return;
+
+    noteMigrationRunningRef.current = true;
+    void (async () => {
+      let durableLibrary = initialPlan.library;
+      if (initialPlan.createdNoteIds.length > 0) {
+        const notesResult = await updateNotes((current) => {
+          const latestPlan = planDmScreenNoteMigration(screen, current);
+          durableLibrary = latestPlan.library;
+          return latestPlan.library;
+        });
+        if (!notesResult.ok) {
+          setWorkspaceError(
+            notesResult.error?.message
+            ?? 'Inline notes remain on the DM Screen because the Notes Library could not save them.',
+          );
+          return;
+        }
+      }
+
+      const screenResult = await updateScreen((current) => (
+        planDmScreenNoteMigration(current, durableLibrary).screen
+      ));
+      if (!screenResult.ok && !screenResult.queued) {
+        setWorkspaceError(
+          screenResult.error?.message
+          ?? 'Notes were saved, but the DM Screen could not link them yet.',
+        );
+        return;
+      }
+      setWorkspaceError('');
+      setWorkspaceNotice(
+        `Moved ${initialPlan.linkedPanelIds.length} note panel${initialPlan.linkedPanelIds.length === 1 ? '' : 's'} into the durable Notes Library.`,
+      );
+    })().finally(() => {
+      noteMigrationRunningRef.current = false;
+    });
+  }, [
+    notesHydrated,
+    notesLibrary,
+    notesStatus,
+    screen,
+    updateNotes,
+    updateScreen,
+  ]);
+
   function screenForExport(): DmScreenState | null {
     if (!screen) return null;
     return containsPartyItem && !partyLibraryCanRefresh
@@ -565,7 +678,81 @@ export default function DmScreenPage() {
 
   async function addConfiguredItem(): Promise<DmScreenQuickAddActionResult> {
     if (addKind === 'note' && (title.trim() || body.trim())) {
-      return addItem({ id: id('note'), kind: 'note', title: title.trim() || 'Note', body: body.trim(), collapsed: false, layout: defaultItemLayout('note'), origin: 'manual' });
+      if (!screen || !notesHydrated || !notesLibrary) {
+        return {
+          ok: false,
+          error: 'The durable Notes Library is still loading. Your draft is still here.',
+        };
+      }
+      const draftIds = quickNoteDraftRef.current ?? {
+        noteId: id('note'),
+        panelId: id('note-panel'),
+      };
+      quickNoteDraftRef.current = draftIds;
+      const noteTitle = title.trim() || 'Scratchpad';
+      const noteBody = body.trim();
+      const createdAt = Date.now();
+      const noteResult = await updateNotes((current) => {
+        const existingIndex = current.notes.findIndex((note) => note.id === draftIds.noteId);
+        if (existingIndex >= 0) {
+          return {
+            ...current,
+            notes: current.notes.map((note, index) => index === existingIndex
+              ? {
+                  ...note,
+                  title: noteTitle,
+                  body: noteBody,
+                  updatedAt: Math.max(createdAt, note.updatedAt),
+                }
+              : note),
+          };
+        }
+        const nextOrder = current.notes.reduce(
+          (max, note) => Math.max(max, note.order),
+          -1,
+        ) + 1;
+        return {
+          ...current,
+          notes: [...current.notes, createNote({
+            kind: 'scratchpad',
+            title: noteTitle,
+            body: noteBody,
+            order: nextOrder,
+            size: 'wide',
+            scope: {
+              type: 'screen',
+              id: screen.id,
+              label: screen.title,
+            },
+            links: [{
+              type: 'dm-screen-panel',
+              id: draftIds.panelId,
+              label: noteTitle,
+            }],
+          }, {
+            id: draftIds.noteId,
+            now: createdAt,
+          })],
+        };
+      });
+      if (!noteResult.ok) {
+        return {
+          ok: false,
+          error: noteResult.error?.message
+            ?? 'The scratchpad could not be saved. Your draft is still here.',
+        };
+      }
+      const panelResult = await addItem({
+        id: draftIds.panelId,
+        kind: 'note',
+        title: noteTitle,
+        resourceId: draftIds.noteId,
+        collapsed: false,
+        layout: { ...defaultItemLayout('note'), width: 'wide' },
+        origin: 'manual',
+      });
+      if (panelResult.ok) quickNoteDraftRef.current = null;
+      return panelResult;
     }
     if (addKind === 'tool') {
       const route = DM_SCREEN_TOOL_ROUTES.find((candidate) => candidate.path === toolPath)!;
@@ -1056,11 +1243,16 @@ export default function DmScreenPage() {
         <ScreenItemBody
           item={focusedPanel.item}
           arranging={false}
+          note={focusedPanel.item.resourceId ? noteMap.get(focusedPanel.item.resourceId) : undefined}
+          notesHydrated={notesHydrated}
+          notesStatus={notesStatus}
+          notesError={notesError}
           monster={focusedPanel.item.resourceId ? monsterMap.get(focusedPanel.item.resourceId) : undefined}
           spell={focusedPanel.item.resourceId ? spellMap.get(focusedPanel.item.resourceId) : undefined}
           partySummary={partySummary}
           partyLoading={!partyLibraryHydrated && !partySummary}
           partyUnavailable={partyLibraryStatus === 'unavailable' || partyLibraryStatus === 'error'}
+          onSaveNote={saveScratchpad}
           onUpdate={(update) => updatePanel(focusedPanel.sectionId, focusedPanel.item.id, update)}
           onDisplayAction={(action) => changePanelDisplay(focusedPanel.item.id, action)}
         />
@@ -1191,6 +1383,10 @@ export default function DmScreenPage() {
 
     {workspaceError && <p className="mb-4 rounded-lg border border-[var(--status-danger)] bg-[var(--status-danger-wash)] px-3 py-2 text-sm print:hidden" role="alert">{workspaceError}</p>}
 
+    {notesWarnings.length > 0 && <p className="mb-4 rounded-lg border border-[var(--status-warning)] bg-[var(--status-warning-wash)] px-3 py-2 text-sm print:hidden" role="status">
+      {notesWarnings.join(' ')}
+    </p>}
+
     {focusStatusMessage && /(could not|unavailable|already)/i.test(focusStatusMessage) && <p className="mb-4 rounded-lg border border-[var(--status-warning)] bg-[var(--status-warning-wash)] px-3 py-2 text-sm print:hidden">{focusStatusMessage}</p>}
 
     {moreOpen && <section id="dm-screen-more-panel" className="card mb-4 print:hidden" aria-labelledby="dm-screen-more-heading">
@@ -1206,7 +1402,7 @@ export default function DmScreenPage() {
         <button type="button" className="btn-secondary justify-center text-sm" onClick={() => {
           const exportScreen = screenForExport();
           if (!exportScreen) return;
-          download('dm-screen.md', dmScreenToMarkdown(exportScreen, monsterMap, spellMap, battle), 'text/markdown');
+          download('dm-screen.md', dmScreenToMarkdown(exportScreen, monsterMap, spellMap, battle, noteMap), 'text/markdown');
         }}><FileText size={16} aria-hidden="true" /> Export Markdown</button>
         <button type="button" className="btn-secondary justify-center text-sm" onClick={() => window.print()}><Printer size={16} aria-hidden="true" /> Print</button>
         <button
@@ -1297,9 +1493,14 @@ export default function DmScreenPage() {
         dropPreview={dropPreview}
         monsters={monsterMap}
         spells={spellMap}
+        notes={noteMap}
+        notesHydrated={notesHydrated}
+        notesStatus={notesStatus}
+        notesError={notesError}
         partySummary={partySummary}
         partyLoading={!partyLibraryHydrated && !partySummary}
         partyUnavailable={partyLibraryStatus === 'unavailable' || partyLibraryStatus === 'error'}
+        onSaveNote={saveScratchpad}
         onAddChild={addSection}
         onAddPanel={openQuickAddForSection}
         onDuplicateItem={(itemId) => setScreen((current) => duplicateDmScreenItem(current, itemId))}
@@ -1330,7 +1531,7 @@ export default function DmScreenPage() {
   </div>;
 }
 
-function ScreenSection({ section, depth, arranging, printing, screenLayout, sectionOptions, dropPreview, monsters, spells, partySummary, partyLoading, partyUnavailable, onAddChild, onAddPanel, onDuplicateItem, onFocusItem, onPanelDisplay, onMovePanel, onDropPreview, onStashItem, onUpdate, onRemove }: {
+function ScreenSection({ section, depth, arranging, printing, screenLayout, sectionOptions, dropPreview, monsters, spells, notes, notesHydrated, notesStatus, notesError, partySummary, partyLoading, partyUnavailable, onSaveNote, onAddChild, onAddPanel, onDuplicateItem, onFocusItem, onPanelDisplay, onMovePanel, onDropPreview, onStashItem, onUpdate, onRemove }: {
   section: DmScreenSection;
   depth: number;
   arranging: boolean;
@@ -1340,9 +1541,14 @@ function ScreenSection({ section, depth, arranging, printing, screenLayout, sect
   dropPreview: DmScreenDropPreview | null;
   monsters: ReadonlyMap<string, Monster>;
   spells: ReadonlyMap<string, Spell>;
+  notes: ReadonlyMap<string, NoteRecord>;
+  notesHydrated: boolean;
+  notesStatus: NoteRepositoryStatus;
+  notesError: NoteStorageError | null;
   partySummary: ReturnType<typeof partyToDmScreenSummary> | null;
   partyLoading: boolean;
   partyUnavailable: boolean;
+  onSaveNote: (noteId: string, body: string) => Promise<NoteWriteResult>;
   onAddChild: (parentId: string) => void;
   onAddPanel: (sectionId: string) => void;
   onDuplicateItem: (itemId: string) => void;
@@ -1393,9 +1599,14 @@ function ScreenSection({ section, depth, arranging, printing, screenLayout, sect
           dropPreview={dropPreview}
           monster={item.resourceId ? monsters.get(item.resourceId) : undefined}
           spell={item.resourceId ? spells.get(item.resourceId) : undefined}
+          note={item.resourceId ? notes.get(item.resourceId) : undefined}
+          notesHydrated={notesHydrated}
+          notesStatus={notesStatus}
+          notesError={notesError}
           partySummary={partySummary}
           partyLoading={partyLoading}
           partyUnavailable={partyUnavailable}
+          onSaveNote={onSaveNote}
           onDuplicate={() => onDuplicateItem(item.id)}
           onFocus={(returnTarget) => onFocusItem(item.id, returnTarget)}
           onDisplayAction={(action) => onPanelDisplay(item.id, action)}
@@ -1426,9 +1637,14 @@ function ScreenSection({ section, depth, arranging, printing, screenLayout, sect
           dropPreview={dropPreview}
           monsters={monsters}
           spells={spells}
+          notes={notes}
+          notesHydrated={notesHydrated}
+          notesStatus={notesStatus}
+          notesError={notesError}
           partySummary={partySummary}
           partyLoading={partyLoading}
           partyUnavailable={partyUnavailable}
+          onSaveNote={onSaveNote}
           onAddChild={onAddChild}
           onAddPanel={onAddPanel}
           onDuplicateItem={onDuplicateItem}
@@ -1449,6 +1665,7 @@ function panelSummary(
   item: DmScreenItem,
   monster: Monster | undefined,
   spell: Spell | undefined,
+  note: NoteRecord | undefined,
   partySummary: ReturnType<typeof partyToDmScreenSummary> | null,
 ): string {
   if (item.kind === 'monster' && monster) return `CR ${monster.challengeRating} · AC ${monster.armor.ac} · ${monster.hitPoints} HP`;
@@ -1456,12 +1673,12 @@ function panelSummary(
   if (item.kind === 'party' && partySummary) return `${partySummary.name} · ${partySummary.memberCount} heroes`;
   if (item.kind === 'rules') return 'Core rules, conditions, and table references';
   if (item.kind === 'initiative' || item.kind === 'battle') return 'Live rounds, turns, and combatant status';
-  const firstLine = item.body?.trim().split(/\r?\n/)[0];
+  const firstLine = (note?.body ?? item.body)?.trim().split(/\r?\n/)[0];
   if (firstLine) return firstLine;
   return `${panelKindLabel(item.kind)} panel`;
 }
 
-function ScreenItem({ item, arranging, printing, sectionId, sectionOptions, panelIndex, panelCount, dropPreview, monster, spell, partySummary, partyLoading, partyUnavailable, onDuplicate, onFocus, onDisplayAction, onMove, onDropPreview, onStash, onUpdate, onRemove }: {
+function ScreenItem({ item, arranging, printing, sectionId, sectionOptions, panelIndex, panelCount, dropPreview, monster, spell, note, notesHydrated, notesStatus, notesError, partySummary, partyLoading, partyUnavailable, onSaveNote, onDuplicate, onFocus, onDisplayAction, onMove, onDropPreview, onStash, onUpdate, onRemove }: {
   item: DmScreenItem;
   arranging: boolean;
   printing: boolean;
@@ -1472,9 +1689,14 @@ function ScreenItem({ item, arranging, printing, sectionId, sectionOptions, pane
   dropPreview: DmScreenDropPreview | null;
   monster?: Monster;
   spell?: Spell;
+  note?: NoteRecord;
+  notesHydrated: boolean;
+  notesStatus: NoteRepositoryStatus;
+  notesError: NoteStorageError | null;
   partySummary: ReturnType<typeof partyToDmScreenSummary> | null;
   partyLoading: boolean;
   partyUnavailable: boolean;
+  onSaveNote: (noteId: string, body: string) => Promise<NoteWriteResult>;
   onDuplicate: () => void;
   onFocus: (returnTarget: HTMLElement) => void;
   onDisplayAction: (action: DmScreenPanelDisplayAction) => void;
@@ -1486,7 +1708,7 @@ function ScreenItem({ item, arranging, printing, sectionId, sectionOptions, pane
 }) {
   const Icon = item.kind === 'party' ? Users : item.kind === 'monster' ? Swords : item.kind === 'spell' ? Sparkles : item.kind === 'tool' ? LinkIcon : item.kind === 'rules' ? BookOpen : item.kind === 'initiative' || item.kind === 'battle' ? Swords : FileText;
   const bodyVisible = printing || (!item.layout.stashed && !item.collapsed);
-  const summary = panelSummary(item, monster, spell, partySummary);
+  const summary = panelSummary(item, monster, spell, note, partySummary);
   const minimumWidth = minimumDmScreenPanelWidth(item.kind);
   const effectiveWidth = effectiveDmScreenPanelWidth(item.kind, item.layout.width);
   const dragStartRef = useRef<{ pointerId: number; x: number; y: number } | null>(null);
@@ -1643,14 +1865,19 @@ function ScreenItem({ item, arranging, printing, sectionId, sectionOptions, pane
     {bodyVisible && <div className="dm-screen-panel-body border-t border-[var(--steel-800)] p-3 print:p-0 print:pt-2">
       <div className="dm-screen-embedded min-w-0" data-embedded-kind={item.kind}>
         <ScreenItemBody
-        item={item}
-        arranging={arranging}
-        monster={monster}
-        spell={spell}
-        partySummary={partySummary}
-        partyLoading={partyLoading}
-        partyUnavailable={partyUnavailable}
-        onUpdate={onUpdate}
+         item={item}
+         arranging={arranging}
+         note={note}
+         notesHydrated={notesHydrated}
+         notesStatus={notesStatus}
+         notesError={notesError}
+         monster={monster}
+         spell={spell}
+         partySummary={partySummary}
+         partyLoading={partyLoading}
+         partyUnavailable={partyUnavailable}
+         onSaveNote={onSaveNote}
+         onUpdate={onUpdate}
         onDisplayAction={onDisplayAction}
         />
       </div>
@@ -1658,14 +1885,19 @@ function ScreenItem({ item, arranging, printing, sectionId, sectionOptions, pane
   </article>;
 }
 
-function ScreenItemBody({ item, arranging, monster, spell, partySummary, partyLoading, partyUnavailable, onUpdate, onDisplayAction }: {
+function ScreenItemBody({ item, arranging, note, notesHydrated, notesStatus, notesError, monster, spell, partySummary, partyLoading, partyUnavailable, onSaveNote, onUpdate, onDisplayAction }: {
   item: DmScreenItem;
   arranging: boolean;
+  note?: NoteRecord;
+  notesHydrated: boolean;
+  notesStatus: NoteRepositoryStatus;
+  notesError: NoteStorageError | null;
   monster?: Monster;
   spell?: Spell;
   partySummary: ReturnType<typeof partyToDmScreenSummary> | null;
   partyLoading: boolean;
   partyUnavailable: boolean;
+  onSaveNote: (noteId: string, body: string) => Promise<NoteWriteResult>;
   onUpdate: (update: (item: DmScreenItem) => DmScreenItem) => void;
   onDisplayAction: (action: DmScreenPanelDisplayAction) => void;
 }) {
@@ -1677,13 +1909,16 @@ function ScreenItemBody({ item, arranging, monster, spell, partySummary, partyLo
         }} />
         Exclude this panel from print and Markdown
       </label>}
-      {item.kind === 'note' && <>
-        <textarea className="w-full border-0 bg-transparent print:hidden" aria-label={`Notes for ${item.title}`} rows={Math.max(3, (item.body?.split('\n').length ?? 1) + 1)} value={item.body ?? ''} onChange={(event) => {
-          const nextBody = event.target.value;
-          onUpdate((current) => ({ ...current, body: nextBody }));
-        }} />
-        <div className="hidden whitespace-pre-wrap text-sm leading-relaxed print:block">{item.body}</div>
-      </>}
+      {item.kind === 'note' && <DmScreenScratchpad
+        note={note}
+        fallbackBody={item.body}
+        fallbackTitle={item.title}
+        hydrated={notesHydrated}
+        repositoryStatus={notesStatus}
+        repositoryError={notesError}
+        onSave={onSaveNote}
+        onLegacyBodyChange={(nextBody) => onUpdate((current) => ({ ...current, body: nextBody }))}
+      />}
       {item.kind === 'monster' && (monster ? <MonsterStatBlock monster={monster} physicalDescription={getMonsterPhysicalDescription(monster.id)} /> : <p className="text-sm text-[var(--accent-danger)]">This monster is no longer available.</p>)}
       {item.kind === 'spell' && (spell ? <SpellReference spell={spell} /> : <p className="text-sm text-[var(--accent-danger)]">This spell is no longer available.</p>)}
       {item.kind === 'tool' && <div><p className="text-sm text-[var(--text-2)]">{item.body}</p>{item.href && <Link className="btn-secondary mt-3 text-sm print:hidden" href={item.href}>Open tool <span aria-hidden="true">→</span></Link>}</div>}

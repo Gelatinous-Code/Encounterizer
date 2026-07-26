@@ -4,6 +4,7 @@ import type { Monster } from './types';
 import type { Spell } from '../data/spells';
 import { rulesReferenceToMarkdown } from '../data/rules-reference';
 import type { DmPartySummary } from './party-adapters';
+import type { NoteRecord } from './notes';
 
 export type DmScreenItemKind = 'note' | 'monster' | 'spell' | 'tool' | 'rules' | 'party' | 'initiative' | 'battle';
 
@@ -752,6 +753,7 @@ function itemMarkdown(
   spells: ReadonlyMap<string, Spell>,
   battle: BattleState,
   party: DmPartySummary | undefined,
+  notes: ReadonlyMap<string, NoteRecord>,
 ): string[] {
   const visibility = item.layout.stashed ? ' _(stashed)_' : '';
   if (item.kind === 'monster') {
@@ -775,6 +777,21 @@ function itemMarkdown(
   if (item.kind === 'party') {
     return [`### ${item.title}${visibility}`, '', ...partyMarkdown(party)];
   }
+  if (item.kind === 'note' && item.resourceId) {
+    const note = notes.get(item.resourceId);
+    if (!note) return [`### ${item.title}${visibility}`, '', '_Note unavailable_', ''];
+    const lines = [`### ${note.title?.trim() || item.title}${visibility}`, ''];
+    if (note.body) lines.push(note.body, '');
+    if (note.kind === 'checklist') {
+      for (const checklistItem of [...note.items].sort((left, right) => (
+        left.order - right.order || left.id.localeCompare(right.id)
+      ))) {
+        lines.push(`- [${checklistItem.completed ? 'x' : ' '}] ${checklistItem.text}`);
+      }
+      if (note.items.length > 0) lines.push('');
+    }
+    return lines;
+  }
   if (item.kind === 'tool') return [`### ${item.title}${visibility}`, '', item.href ?? '', ''];
   return [`### ${item.title}${visibility}`, '', item.body ?? '', ''];
 }
@@ -789,6 +806,7 @@ export function dmScreenToMarkdown(
   monsters: ReadonlyMap<string, Monster>,
   spells: ReadonlyMap<string, Spell>,
   battle: BattleState,
+  notes: ReadonlyMap<string, NoteRecord> = new Map(),
 ): string {
   const lines = [`# ${state.title}`, ''];
   const walk = (sections: DmScreenSection[], depth: number) => {
@@ -796,7 +814,14 @@ export function dmScreenToMarkdown(
       lines.push(`${'#'.repeat(Math.min(depth + 1, 6))} ${section.title}`, '');
       for (const item of section.items) {
         if (item.layout.excludedFromPrint) continue;
-        lines.push(...itemMarkdown(item, monsters, spells, battle, state.partySnapshot));
+        lines.push(...itemMarkdown(
+          item,
+          monsters,
+          spells,
+          battle,
+          state.partySnapshot,
+          notes,
+        ));
       }
       walk(section.children, depth + 1);
     }

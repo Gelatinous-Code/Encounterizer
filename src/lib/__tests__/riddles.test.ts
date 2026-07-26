@@ -50,4 +50,12 @@ describe('riddle corpus lint (spec §7.2–7.3)', () => {
       }
     }
   });
+  it('keeps reviewed alternate answers aligned with each riddle', () => {
+    const byId = new Map(RIDDLES.map(riddle => [riddle.id, riddle]));
+
+    expect(byId.get('candle')?.altAnswers).not.toContain('a torch');
+    expect(byId.get('armor')?.altAnswers).toEqual(expect.arrayContaining(['chainmail', 'chain mail', 'mail']));
+    expect(byId.get('mask')?.altAnswers).toEqual(expect.arrayContaining(['disguise', 'costume']));
+    expect(byId.get('net')?.text).toMatch(/cast through air or water/i);
+  });
 });

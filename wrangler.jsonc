@@ -41,9 +41,6 @@
   "version_metadata": {
     "binding": "WORKER_VERSION"
   },
-  "secrets": {
-    "required": ["BETTER_AUTH_SECRET", "TURNSTILE_SECRET"]
-  },
   "vars": {
     "APP_ENV": "preview",
     "AUTH_EMAIL_ENABLED": "true",

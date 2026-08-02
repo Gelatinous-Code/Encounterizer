@@ -1,5 +1,8 @@
 # Copy to .dev.vars for local Wrangler development. Never commit real values.
 BETTER_AUTH_SECRET=replace-with-at-least-32-random-bytes
+# Use Cloudflare's documented test secret locally; use encrypted Wrangler
+# secrets for every deployed environment.
+TURNSTILE_SECRET=replace-with-cloudflare-turnstile-test-secret
 # Optional Google OAuth credentials.
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=

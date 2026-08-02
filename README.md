@@ -66,7 +66,7 @@ Object services.
 | Framework | Next.js 16 App Router on Cloudflare Workers through OpenNext |
 | Language | TypeScript (strict) |
 | Styling | Tailwind CSS + CSS custom properties (Dusksteel tokens), Spectral + IBM Plex Sans via next/font, Lucide icons |
-| Current data | Generated SRD 5.2.1 TypeScript data plus transitional browser persistence |
+| Current data | D1-backed identity/campaign tenancy plus generated SRD data and transitional browser tool persistence |
 | Target platform | Cloudflare Workers/OpenNext, D1, R2, Durable Objects, Queues, and Workflows |
 | Testing | Vitest in Node and workerd (rules math, importer, Monte Carlo statistics, Worker integration) |
 | CI/CD | Cloudflare Workers Builds plus protected GitHub Actions staging/production promotion |
@@ -151,7 +151,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ```bash
 npm run dev              # Development server
-npm run build            # Static export → out/
+npm run build            # Production Next.js application build
 npm run typecheck        # tsc --noEmit
 npm run lint             # ESLint (next/core-web-vitals)
 npm test                 # Vitest suite
@@ -159,7 +159,16 @@ npm run import:bestiary  # Regenerate the SRD bestiary from the pinned source
 npm run import:spells    # Regenerate the SRD spell reference from the pinned source
 npm run import:srd       # Regenerate structured SRD content from pinned Markdown
 npm run srd:check        # Audit every committed SRD corpus (no network)
+npm run cf:build         # Build the full-stack OpenNext Worker
+npm run cf:test          # Exercise the bundled Worker and D1 inside workerd
+npm run cf:d1:migrate:local # Apply D1 migrations to local emulation
 ```
+
+Cloud identity and campaign development requires Wrangler bindings. Copy
+`.dev.vars.example` to `.dev.vars`, replace the placeholder auth secret, run
+`npm run cf:d1:migrate:local`, then use `npm run preview`. See the
+[CF-2 identity and authorization runbook](docs/operations/cf2-identity-authorization.md)
+for environment provisioning and promotion.
 
 ## Monster Database
 

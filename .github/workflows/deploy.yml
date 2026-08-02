@@ -46,6 +46,9 @@ jobs:
       - name: Test artifact inside workerd
         run: npm run cf:test
 
+      - name: Apply staging D1 migrations
+        run: npm run cf:d1:migrate:staging
+
       - name: Deploy staging
         run: npm run cf:deploy:staging
 
@@ -86,6 +89,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: open-next-${{ github.sha }}
+
+      - name: Apply production D1 migrations
+        run: npm run cf:d1:migrate:production
 
       - name: Deploy production
         run: npm run cf:deploy:production

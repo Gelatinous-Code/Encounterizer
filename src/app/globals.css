@@ -1320,6 +1320,22 @@ select, textarea, input:not([type]), input[type="text"], input[type="search"], i
   transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
+.input-field {
+  min-height: 2.75rem;
+  background-color: var(--control-surface);
+  border: 1px solid var(--control-border);
+  color: var(--text-1);
+  padding: 0.625rem 0.8rem;
+  border-radius: 0.625rem;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.input-field::placeholder {
+  color: var(--text-3);
+  opacity: 1;
+}
+
 textarea {
   resize: vertical;
 }

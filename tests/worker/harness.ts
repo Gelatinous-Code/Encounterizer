@@ -1,5 +1,7 @@
 interface HarnessEnv {
   APP: Fetcher;
+  DB: D1Database;
+  TEST_MIGRATIONS: Array<{ name: string; queries: string[] }>;
 }
 
 const harness = {

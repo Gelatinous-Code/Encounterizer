@@ -16,6 +16,7 @@ import {
   type RouteInfo,
 } from '@/lib/site';
 import RouteIcon from '@/components/RouteIcon';
+import AuthNav from '@/components/AuthNav';
 import { getTheme, setTheme, subscribeTheme } from '@/lib/theme';
 
 interface NavigationState {
@@ -387,6 +388,10 @@ function NavigationBar({ pathname }: { pathname: string }) {
               )}
             </div>
 
+            <div className="hidden sm:block">
+              <AuthNav onNavigate={closeNavigation} />
+            </div>
+
             <button
               type="button"
               className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-[var(--text-2)] transition-colors hover:bg-[var(--steel-800)] hover:text-[var(--bronze)]"
@@ -429,6 +434,9 @@ function NavigationBar({ pathname }: { pathname: string }) {
             className="absolute inset-x-4 top-full mt-2 max-h-[calc(100dvh-5rem)] overflow-y-auto overscroll-contain rounded-xl border border-[var(--steel-700)] bg-[var(--steel-900)] p-3 shadow-[0_18px_45px_rgba(0,0,0,0.34)] sm:inset-x-6 lg:hidden"
             style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
           >
+            <div className="mb-3 sm:hidden">
+              <AuthNav onNavigate={closeNavigation} />
+            </div>
             <ToolGroups pathname={pathname} onNavigate={closeNavigation} mobile />
           </div>
         )}

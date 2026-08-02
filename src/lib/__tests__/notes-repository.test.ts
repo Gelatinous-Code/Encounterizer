@@ -80,10 +80,6 @@ function ids(namespace: string): NoteIdFactory {
   return (kind) => `${namespace}-${kind}-${++next}`;
 }
 
-async function settle(): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 0));
-}
-
 describe('NoteLibraryRepository', () => {
   it('creates one durable empty Notes Library', async () => {
     const factory = new IDBFactory();
@@ -251,7 +247,7 @@ describe('NoteLibraryRepository', () => {
         title: 'Across tabs',
       }, { id: 'note-shared', now: 500 })],
     }));
-    await settle();
+    await second.refresh();
 
     expect(second.getSnapshot().library?.notes).toEqual([
       expect.objectContaining({ id: 'note-shared', title: 'Across tabs' }),

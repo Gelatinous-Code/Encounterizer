@@ -9,7 +9,7 @@ export const SITE_DESCRIPTION =
   'Free, private tools for D&D 5.5e DMs: build encounters, generate maps and challenges, '
   + 'run combat, and search SRD rules, classes, monsters, spells, equipment, and character options.';
 
-/** Set the SITE_URL repo variable once the Azure Static Web App exists.
+/** Set SITE_URL to the canonical origin for the active deployment environment.
  *  `||` (not `??`) on purpose: when the repo variable is unset, GitHub
  *  Actions passes an EMPTY string, which must also fall back — new URL('')
  *  throws and kills the build. */

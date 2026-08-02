@@ -8,10 +8,12 @@
 A free D&D 5.5e (2024 rules) toolkit for Dungeon Masters: build balanced
 encounters, forecast the battle before your party rolls initiative, and run
 the whole session — prep tools, live battle support, and searchable SRD rules
-in one place. No accounts, no server, no cost. Everything runs in your browser.
+in one place.
 
-> **Live site:** coming soon on Azure Static Web Apps — see
-> [Deployment](#deployment).
+> **Platform direction:** Encounterizer is moving from its current browser-only
+> static build to a server-authoritative, cloud-native application on
+> Cloudflare. See the
+> [Cloudflare Cloud-Native Roadmap](docs/cloudflare-cloud-native-roadmap.md).
 
 ## The Tools
 
@@ -33,8 +35,8 @@ in one place. No accounts, no server, no cost. Everything runs in your browser.
   CR, type, size, environment,
   movement modes, damage types dealt, resistances, immunities, conditions,
   legendary/spellcaster/lair toggles. **Import your own monsters** from
-  5etools bestiary JSON or Encounterizer exports — stored locally in your
-  browser, merged into every tool.
+  5etools bestiary JSON or Encounterizer exports — stored locally in the
+  current build and moving to private campaign-scoped cloud storage.
 - **🗺️ Map Generator** — Procedural battle maps: BSP room-and-corridor
   dungeons, cellular-automata caves, and environment-specific outdoor
   terrain. Export as JSON or ASCII.
@@ -48,30 +50,32 @@ in one place. No accounts, no server, no cost. Everything runs in your browser.
   items, 17 feats, 4 backgrounds, and 9 species**. Use category-specific
   filters, open focused printable details, and bookmark anything for later.
   **Import your own spells** from 5etools
-  spell JSON or Encounterizer exports — stored locally in your browser.
+  spell JSON or Encounterizer exports — stored locally in the current build
+  and moving to private campaign-scoped cloud storage.
 
 Every prep page has a **Print** button with a dedicated print stylesheet —
-clean, ink-friendly handouts straight from the browser. Settings, histories,
-bookmarked references, pinned spells, saved encounters, and your party configuration persist in
-localStorage between visits.
+clean, ink-friendly handouts straight from the browser. The current build
+persists settings and workspace data in browser storage; the cloud-native
+milestones replace that persistence with authenticated D1, R2, and Durable
+Object services.
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | Next.js 16 (App Router, static export) |
+| Framework | Next.js 16 App Router (static export during the platform transition) |
 | Language | TypeScript (strict) |
 | Styling | Tailwind CSS + CSS custom properties (Dusksteel tokens), Spectral + IBM Plex Sans via next/font, Lucide icons |
-| Data | Generated TypeScript bestiary, rules, classes, spells, equipment, magic items, feats, and origins from SRD 5.2.1; client-side 5etools importers |
+| Current data | Generated SRD 5.2.1 TypeScript data plus transitional browser persistence |
+| Target platform | Cloudflare Workers/OpenNext, D1, R2, Durable Objects, Queues, and Workflows |
 | Testing | Vitest (140+ tests: rules math, importer, Monte Carlo statistics) |
-| CI/CD | GitHub Actions → Azure Static Web Apps (free tier) |
-| Hosting cost | $0 |
+| CI/CD | GitHub Actions; Azure Static Web Apps during transition, then Cloudflare Workers |
 
 ## Project Structure
 
 ```
 src/
-  app/                       # Next.js App Router (fully static — no server code)
+  app/                       # Next.js App Router (static during the platform transition)
     page.tsx                 # Landing page (stats computed from data modules)
     encounters/              # Encounter Builder + Battle Forecast
     monsters/                # Bestiary + custom monster import
@@ -247,20 +251,14 @@ usual statistics.
 
 ## Deployment
 
-The site is a pure static export deployed to **Azure Static Web Apps
-(free tier)** by `.github/workflows/deploy.yml` on every push to the
-default branch. One-time setup:
+The current deployment workflow produces a static export and sends it to Azure
+Static Web Apps. That is a temporary baseline, not the target architecture.
 
-1. Azure Portal → **Create resource → Static Web App** → Plan: **Free** →
-   Deployment source: **Other** (important — choosing "GitHub" makes Azure
-   commit its own competing workflow).
-2. After creation, copy the site URL from Overview and the deployment token
-   from **Manage deployment token**.
-3. In the GitHub repo: Settings → Secrets and variables → Actions → add
-   **secret** `AZURE_STATIC_WEB_APPS_API_TOKEN` (the token) and
-   **variable** `SITE_URL` (the URL, e.g. `https://<name>.azurestaticapps.net`).
-4. Push to the default branch (or re-run the Deploy workflow). Verify the
-   live site, deep-link refreshes, and the themed 404 page.
+The approved target is a full-stack Next.js application on Cloudflare Workers
+through OpenNext, with separate preview/staging and production resources. The
+runtime conversion, resource provisioning, data migration, production cutover,
+and Azure retirement are defined in the
+[Cloudflare Cloud-Native Roadmap](docs/cloudflare-cloud-native-roadmap.md).
 
 ## Releases
 
@@ -283,18 +281,25 @@ under **Settings → Actions → General → Workflow permissions**.
 
 ## Design Principles
 
-1. **No LLM dependency** — All generation is algorithmic. No API calls, no ongoing AI costs.
-2. **Client-side first** — Computation happens in the browser. The host serves static files.
-3. **Free to run** — Azure Static Web Apps free tier ($0/month).
-4. **2024 rules** — 5.5e / 2024 encounter math and SRD 5.2.1 stat blocks. DMs rely on these numbers at the table.
-5. **DM-centric** — Every feature answers "does this save the DM time during prep or at the table?"
-6. **Legally clean** — Ships only CC-BY-4.0 SRD content; anything else stays on the user's own device.
+1. **Cloud-native authority** — Cloudflare services own durable application data, compute, files, and live-session coordination.
+2. **Server-enforced trust** — Authentication, authorization, validation, and tenancy boundaries are enforced on the server.
+3. **Deterministic rules core** — Official rules math and seeded generation remain testable, versioned, and independent of AI output.
+4. **Cost discipline** — Metered features ship with limits, observability, and budget alerts.
+5. **2024 rules** — 5.5e / 2024 encounter math and SRD 5.2.1 stat blocks must remain accurate; DMs rely on these numbers at the table.
+6. **DM-centric** — Every feature answers "does this save the DM time during prep or at the table?"
+7. **Legally clean and private by default** — The public catalog contains CC-BY-4.0 SRD content; custom non-SRD content remains private unless its owner explicitly shares it.
+8. **No required LLM dependency** — Core encounter, reference, and battle workflows continue to work without AI services.
 
 ## Roadmap
 
-See [GitHub Issues](https://github.com/Daren9m/Encounterizer/issues) and
-the [milestones](https://github.com/Daren9m/Encounterizer/milestones) for
-the full backlog. Highlights:
+The active platform plan is the
+[Cloudflare Cloud-Native Roadmap](docs/cloudflare-cloud-native-roadmap.md),
+organized as milestones CF-0 through CF-9 with explicit exit gates and
+issue-shaped work packages.
+
+See [GitHub Issues](https://github.com/Daren9m/Encounterizer/issues) and the
+[milestones](https://github.com/Daren9m/Encounterizer/milestones) for the full
+product backlog. Existing highlights include:
 
 - **Character Import** (#10) — Parse D&D Beyond links, PDFs, or sheet images into Battle Forecast parties
 - **Enhanced Export** (#15) — PDF stat blocks (map VTT export shipped with the Map Generator Overhaul)

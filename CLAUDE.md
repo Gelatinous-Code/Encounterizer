@@ -3,16 +3,25 @@
 ## What This Is
 A D&D 5.5e (2024 rules) toolkit for Dungeon Masters: encounter building with
 2024 XP budgets, a Monte Carlo Battle Forecast, an SRD 5.2.1 bestiary with
-client-side custom imports, a map generator, a unified non-combat generator
+custom imports, a map generator, a unified non-combat generator
 (puzzles & challenges), a live DM screen and battle organizer, a searchable
-SRD rules reference, and a spell reference. Built with Next.js 16 (App
-Router, **static export**), TypeScript strict, and Tailwind CSS. Deployed to
-Azure Static Web Apps free tier.
+SRD rules reference, and a spell reference. Built with Next.js 16 App Router,
+TypeScript strict, and Tailwind CSS.
+
+The current checkout is a static, browser-persistent application deployed
+through Azure Static Web Apps. That is a transitional implementation. The
+approved product target is the server-authoritative Cloudflare architecture in
+`docs/cloudflare-cloud-native-roadmap.md`.
 
 ## Architecture
-- **Static export** — `output: 'export'` in next.config.js. **No server
-  code**: API routes and middleware are forbidden; everything runs in the
-  browser.
+- **Current transitional runtime** — `output: 'export'` in next.config.js
+  still produces the Azure-hosted static build. Preserve a working build until
+  CF-1 intentionally replaces this constraint; do not treat it as the target.
+- **Approved target** — Full-stack Next.js on Cloudflare Workers via OpenNext;
+  D1 is the relational source of truth, R2 stores private files, Durable
+  Objects coordinate live sessions, and Queues/Workflows run background work.
+  Browser storage is migration input or transient cache, never the target
+  durable authority.
 - **Eight tool pages**: `encounters` (builder + Battle Forecast), `monsters`
   (bestiary + custom import), `maps`, `noncombat`
   (unified puzzles & challenges — 12 verified puzzle families + 6 challenge
@@ -23,9 +32,10 @@ Azure Static Web Apps free tier.
   under All tools. `TOOL_SECTIONS` and `NAV_SHORTCUT_ROUTES` in
   `src/lib/site.ts` are the sources of truth. Per-page metadata lives in each
   route's `layout.tsx`. Plus server-rendered `/` and `/credits`.
-- **Pure engine layer** — `src/lib/` functions have no side effects (no DOM,
-  storage, or network). Browser concerns (localStorage, FileReader) live in
-  `src/app/` hooks and `src/components/`.
+- **Pure engine layer** — `src/lib/` rules and generator functions have no DOM,
+  storage, or network side effects so they can execute and be tested in the
+  Workers runtime. UI concerns live in `src/app/` hooks and `src/components/`;
+  server domain services and platform adapters must remain explicit boundaries.
 - **Generated SRD data** — `src/data/monsters-*.ts` (by
   `scripts/import-bestiary.ts`) and `src/data/spells-l*.ts` + `spells-meta.ts`
   (by `scripts/import-spells.ts`) are AUTO-GENERATED from SRD 5.2.1 subsets
@@ -56,8 +66,10 @@ Azure Static Web Apps free tier.
   the 2024 tag format (`{@atkr m}` etc.). Used by the import script AND the
   in-browser custom importer. `src/lib/import-5etools-spells.ts` is the
   spell counterpart (shared tag stripping, same dual use).
-- `src/lib/storage.ts` + `use-persistent-state.ts` — SSR-safe localStorage
-  layer (prefix `encounterizer:v1:`). All persistence goes through these.
+- `src/lib/storage.ts` + `use-persistent-state.ts` — transitional browser
+  persistence (prefix `encounterizer:v1:`). Do not add new durable product
+  state here; replace existing uses under the applicable cloud milestone and
+  retain browser reads only for explicit one-time import paths.
 - `src/app/hooks/useMonsters.ts` — the single merge point for built-in +
   custom monsters; every monster consumer reads from it. `useSpells.ts` is
   the spell equivalent.
@@ -71,11 +83,21 @@ Azure Static Web Apps free tier.
   Easy/Medium/Hard refer to skill-check DCs and are correct as-is.
 - Monster and spell data must be accurate — DMs rely on it at the table.
   The public bestiary and spell reference ship **only SRD 5.2.1 (CC-BY-4.0)
-  content**; non-SRD monsters and spells stay in users' local JSON imports.
+  content**; non-SRD monsters and spells are private campaign data unless their
+  owner explicitly shares them.
   Full attribution lives on /credits (the footer links to it — CC-BY-4.0
   requires it while any SRD content ships).
-- Keep everything client-side. No database, no server state, no external
-  API calls at runtime.
+- New durable state is server-authoritative. Enforce authentication,
+  authorization, campaign tenancy, and validation in Worker/server code; never
+  rely on hidden client controls or client-supplied ownership IDs.
+- Use D1 for relational application data, private R2 for files, Durable Objects
+  for strongly consistent live coordination, Queues/Workflows for background
+  work, and KV only as a disposable cache. Follow the ownership and milestone
+  boundaries in `docs/cloudflare-cloud-native-roadmap.md`.
+- Until CF-1 lands, the existing static build must continue to pass. A change
+  implementing CF-1 may deliberately remove static-export compatibility and
+  must replace it with Workers-runtime and deployment coverage in the same
+  milestone.
 - The `Monster` type has many required fields — see `src/lib/types.ts`.
 - Statistical claims in the Battle Forecast stay hedged ("forecast",
   "plays more like") — it is intentionally approximate.
@@ -83,7 +105,7 @@ Azure Static Web Apps free tier.
 ## Build & Test
 ```bash
 npm run dev              # Development server on :3000
-npm run build            # Static export → out/ (must pass with 0 errors)
+npm run build            # Current transition: static export → out/
 npm run typecheck        # Type check only
 npm run lint             # ESLint (next/core-web-vitals)
 npm test                 # Vitest (rules math, importer, sim statistics)
@@ -99,5 +121,6 @@ Do not run `npm run build` while `npm run dev` is running — they share
 The primary development branch is `main`; work
 happens on feature branches with PRs. Conventional commits; push after every
 commit; align work with GitHub milestones/issues. CI (typecheck, lint, test,
-build) runs on every PR; the Deploy workflow ships `out/` to Azure Static
-Web Apps on pushes to the default branch.
+build) runs on every PR. Azure remains the transitional deploy target until the
+Cloudflare foundation and cutover milestones replace it. New platform work is
+sequenced by `docs/cloudflare-cloud-native-roadmap.md`.

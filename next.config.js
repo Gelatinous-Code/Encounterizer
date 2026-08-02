@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Fully static site — deployable to any static host (Azure Static Web Apps).
-  // No server code: API routes and middleware are unsupported under 'export'.
+  // Transitional Azure build. CF-1 in the cloud-native roadmap replaces this
+  // with the OpenNext Workers runtime and server-capable configuration.
   output: 'export',
   trailingSlash: true,
   images: { unoptimized: true },

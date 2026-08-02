@@ -155,6 +155,11 @@ remain functional while server routes and platform bindings become available.
 
 ## CF-2 — Identity, Campaigns & Authorization
 
+**Implementation status:** Worker code, D1 migration, user-facing flows, and
+the negative authorization suite are implemented on the CF-2 branch. Live
+Turnstile/email activation and staged environment promotion remain deployment
+gates; production is not changed by merging implementation code alone.
+
 ### Outcome
 
 Every durable resource belongs to an authenticated user or campaign, and the

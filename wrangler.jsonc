@@ -10,6 +10,20 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "encounterizer-preview",
+      "database_id": "97796466-8f43-420e-8be6-6df1e83a7dc8",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "send_email": [
+    {
+      "name": "EMAIL",
+      "allowed_sender_addresses": ["noreply@encounterizer.com"]
+    }
+  ],
   "limits": {
     "cpu_ms": 30000
   },
@@ -28,7 +42,12 @@
     "binding": "WORKER_VERSION"
   },
   "vars": {
-    "APP_ENV": "preview"
+    "APP_ENV": "preview",
+    "AUTH_EMAIL_ENABLED": "true",
+    "AUTH_ORIGIN": "https://encounterizer-main.dnd-new-dawn-guild-assistant.workers.dev",
+    "AUTH_ALLOWED_HOSTS": "encounterizer-main.dnd-new-dawn-guild-assistant.workers.dev,*.encounterizer-main.dnd-new-dawn-guild-assistant.workers.dev",
+    "AUTH_TRUSTED_ORIGINS": "https://encounterizer-main.dnd-new-dawn-guild-assistant.workers.dev",
+    "TURNSTILE_HOSTNAMES": "encounterizer-main.dnd-new-dawn-guild-assistant.workers.dev"
   },
   "env": {
     "local": {
@@ -37,6 +56,20 @@
         "directory": ".open-next/assets",
         "binding": "ASSETS"
       },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "encounterizer-preview",
+          "database_id": "97796466-8f43-420e-8be6-6df1e83a7dc8",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "send_email": [
+        {
+          "name": "EMAIL",
+          "allowed_sender_addresses": ["noreply@encounterizer.com"]
+        }
+      ],
       "limits": {
         "cpu_ms": 30000
       },
@@ -55,7 +88,13 @@
         "binding": "WORKER_VERSION"
       },
       "vars": {
-        "APP_ENV": "local"
+        "APP_ENV": "local",
+        "AUTH_EMAIL_ENABLED": "false",
+        "AUTH_ORIGIN": "http://localhost:3000",
+        "AUTH_ALLOWED_HOSTS": "localhost,127.0.0.1,encounterizer.test",
+        "AUTH_TRUSTED_ORIGINS": "http://localhost:3000,http://127.0.0.1:3000,https://encounterizer.test",
+        "TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
+        "TURNSTILE_HOSTNAMES": "localhost,127.0.0.1,encounterizer.test"
       }
     },
     "staging": {
@@ -64,6 +103,20 @@
         "directory": ".open-next/assets",
         "binding": "ASSETS"
       },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "encounterizer-stg",
+          "database_id": "dc6b3da7-bf4f-4d7f-aad2-beaaf0d2a347",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "send_email": [
+        {
+          "name": "EMAIL",
+          "allowed_sender_addresses": ["noreply@encounterizer.com"]
+        }
+      ],
       "limits": {
         "cpu_ms": 30000
       },
@@ -82,7 +135,12 @@
         "binding": "WORKER_VERSION"
       },
       "vars": {
-        "APP_ENV": "staging"
+        "APP_ENV": "staging",
+        "AUTH_EMAIL_ENABLED": "true",
+        "AUTH_ORIGIN": "https://encounterizer-stg.dnd-new-dawn-guild-assistant.workers.dev",
+        "AUTH_ALLOWED_HOSTS": "encounterizer-stg.dnd-new-dawn-guild-assistant.workers.dev",
+        "AUTH_TRUSTED_ORIGINS": "https://encounterizer-stg.dnd-new-dawn-guild-assistant.workers.dev",
+        "TURNSTILE_HOSTNAMES": "encounterizer-stg.dnd-new-dawn-guild-assistant.workers.dev"
       }
     },
     "production": {
@@ -103,6 +161,20 @@
         "directory": ".open-next/assets",
         "binding": "ASSETS"
       },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "encounterizer-prod",
+          "database_id": "c3b9749e-0c32-48b9-ac43-f51a05ac40c2",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "send_email": [
+        {
+          "name": "EMAIL",
+          "allowed_sender_addresses": ["noreply@encounterizer.com"]
+        }
+      ],
       "limits": {
         "cpu_ms": 30000
       },
@@ -121,7 +193,12 @@
         "binding": "WORKER_VERSION"
       },
       "vars": {
-        "APP_ENV": "production"
+        "APP_ENV": "production",
+        "AUTH_EMAIL_ENABLED": "true",
+        "AUTH_ORIGIN": "https://encounterizer.com",
+        "AUTH_ALLOWED_HOSTS": "encounterizer.com,www.encounterizer.com",
+        "AUTH_TRUSTED_ORIGINS": "https://encounterizer.com,https://www.encounterizer.com",
+        "TURNSTILE_HOSTNAMES": "encounterizer.com,www.encounterizer.com"
       }
     }
   }

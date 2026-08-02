@@ -108,8 +108,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   </div>
                 </div>
                 <p className="text-sm leading-relaxed text-[var(--text-2)]">
-                  Plan the session, run the table, and find answers fast. Everything stays in
-                  your browser.
+                  Plan the session, run the table, and find answers fast. Campaign access is
+                  protected at the Cloudflare edge.
                 </p>
               </div>
 

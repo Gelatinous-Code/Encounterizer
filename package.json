@@ -10,8 +10,13 @@
     "preview": "npm run cf:build && opennextjs-cloudflare preview --env local",
     "deploy": "npm run cf:build && opennextjs-cloudflare deploy --env=\"\"",
     "cf:build": "opennextjs-cloudflare build",
-    "cf:typegen": "wrangler types --env local --env-interface CloudflareEnv cloudflare-env.d.ts",
-    "cf:typegen:check": "wrangler types --env local --env-interface CloudflareEnv cloudflare-env.d.ts --check",
+    "cf:d1:migrate:local": "wrangler d1 migrations apply encounterizer-preview --local --env local",
+    "cf:d1:migrate:preview": "wrangler d1 migrations apply encounterizer-preview --remote",
+    "cf:d1:migrate:staging": "wrangler d1 migrations apply encounterizer-stg --remote --env staging",
+    "cf:d1:migrate:production": "wrangler d1 migrations apply encounterizer-prod --remote --env production",
+    "cf:d1:pending": "wrangler d1 migrations list encounterizer-stg --remote --env staging",
+    "cf:typegen": "wrangler types --env production --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "cf:typegen:check": "wrangler types --env production --env-interface CloudflareEnv cloudflare-env.d.ts --check",
     "cf:test": "wrangler deploy --dry-run --outdir .worker-test --env local && vitest run --config vitest.worker.config.mts",
     "cf:dry-run": "wrangler deploy --dry-run --env staging",
     "cf:startup": "wrangler check startup --env staging",
@@ -67,10 +72,12 @@
     }
   },
   "dependencies": {
+    "better-auth": "1.6.25",
     "lucide-react": "^1.24.0",
     "next": "^16.2.12",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.112.3",

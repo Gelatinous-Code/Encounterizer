@@ -24,10 +24,11 @@ This is not a hosting migration. It changes the application model:
 - Workers AI, AI Gateway, and Vectorize remain optional product capabilities,
   not dependencies of the rules engine.
 
-The current static Azure deployment remains a temporary baseline until the
-Cloudflare runtime milestone has passed its exit gate. Historical design
-documents describe the constraints that applied when they were written; this
-roadmap governs new platform work.
+The full-stack Worker runtime is available in isolated staging. The current
+static Azure deployment remains the temporary public-production baseline until
+the CF-8 cutover retires it. Historical design documents describe the
+constraints that applied when they were written; this roadmap governs new
+platform work.
 
 ## Target platform map
 
@@ -119,6 +120,9 @@ every feature pull request.
   that later milestones can compare against.
 
 ## CF-1 — Full-Stack Worker Foundation
+
+Implementation and operator commands are maintained in
+[`docs/operations/cloudflare-delivery.md`](operations/cloudflare-delivery.md).
 
 ### Outcome
 

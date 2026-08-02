@@ -34,5 +34,17 @@ jobs:
       - name: SRD content check (audit committed generated data)
         run: npm run srd:check
 
-      - name: Build (static export)
-        run: npm run build
+      - name: Check generated Worker bindings
+        run: npm run cf:typegen:check
+
+      - name: Build OpenNext Worker
+        run: npm run cf:build
+
+      - name: Test inside workerd
+        run: npm run cf:test
+
+      - name: Validate staging bundle
+        run: npm run cf:dry-run
+
+      - name: Check Worker startup budget
+        run: npm run cf:startup

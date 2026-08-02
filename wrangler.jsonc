@@ -1,0 +1,128 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "encounterizer-main",
+  "main": "worker.ts",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": true,
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "limits": {
+    "cpu_ms": 30000
+  },
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.05
+    }
+  },
+  "version_metadata": {
+    "binding": "WORKER_VERSION"
+  },
+  "vars": {
+    "APP_ENV": "preview"
+  },
+  "env": {
+    "local": {
+      "name": "encounterizer-local",
+      "assets": {
+        "directory": ".open-next/assets",
+        "binding": "ASSETS"
+      },
+      "limits": {
+        "cpu_ms": 30000
+      },
+      "observability": {
+        "enabled": true,
+        "logs": {
+          "enabled": true,
+          "head_sampling_rate": 1
+        },
+        "traces": {
+          "enabled": true,
+          "head_sampling_rate": 1
+        }
+      },
+      "version_metadata": {
+        "binding": "WORKER_VERSION"
+      },
+      "vars": {
+        "APP_ENV": "local"
+      }
+    },
+    "staging": {
+      "name": "encounterizer-stg",
+      "assets": {
+        "directory": ".open-next/assets",
+        "binding": "ASSETS"
+      },
+      "limits": {
+        "cpu_ms": 30000
+      },
+      "observability": {
+        "enabled": true,
+        "logs": {
+          "enabled": true,
+          "head_sampling_rate": 1
+        },
+        "traces": {
+          "enabled": true,
+          "head_sampling_rate": 0.05
+        }
+      },
+      "version_metadata": {
+        "binding": "WORKER_VERSION"
+      },
+      "vars": {
+        "APP_ENV": "staging"
+      }
+    },
+    "production": {
+      "name": "encounterizer-main",
+      "workers_dev": false,
+      "preview_urls": false,
+      "routes": [
+        {
+          "pattern": "encounterizer.com",
+          "custom_domain": true
+        },
+        {
+          "pattern": "www.encounterizer.com",
+          "custom_domain": true
+        }
+      ],
+      "assets": {
+        "directory": ".open-next/assets",
+        "binding": "ASSETS"
+      },
+      "limits": {
+        "cpu_ms": 30000
+      },
+      "observability": {
+        "enabled": true,
+        "logs": {
+          "enabled": true,
+          "head_sampling_rate": 0.1
+        },
+        "traces": {
+          "enabled": true,
+          "head_sampling_rate": 0.01
+        }
+      },
+      "version_metadata": {
+        "binding": "WORKER_VERSION"
+      },
+      "vars": {
+        "APP_ENV": "production"
+      }
+    }
+  }
+}

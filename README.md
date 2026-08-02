@@ -63,19 +63,19 @@ Object services.
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | Next.js 16 App Router (static export during the platform transition) |
+| Framework | Next.js 16 App Router on Cloudflare Workers through OpenNext |
 | Language | TypeScript (strict) |
 | Styling | Tailwind CSS + CSS custom properties (Dusksteel tokens), Spectral + IBM Plex Sans via next/font, Lucide icons |
 | Current data | Generated SRD 5.2.1 TypeScript data plus transitional browser persistence |
 | Target platform | Cloudflare Workers/OpenNext, D1, R2, Durable Objects, Queues, and Workflows |
-| Testing | Vitest (140+ tests: rules math, importer, Monte Carlo statistics) |
-| CI/CD | GitHub Actions; Azure Static Web Apps during transition, then Cloudflare Workers |
+| Testing | Vitest in Node and workerd (rules math, importer, Monte Carlo statistics, Worker integration) |
+| CI/CD | Cloudflare Workers Builds plus protected GitHub Actions staging/production promotion |
 
 ## Project Structure
 
 ```
 src/
-  app/                       # Next.js App Router (static during the platform transition)
+  app/                       # Next.js App Router (static and server-rendered routes)
     page.tsx                 # Landing page (stats computed from data modules)
     encounters/              # Encounter Builder + Battle Forecast
     monsters/                # Bestiary + custom monster import
@@ -251,14 +251,16 @@ usual statistics.
 
 ## Deployment
 
-The current deployment workflow produces a static export and sends it to Azure
-Static Web Apps. That is a temporary baseline, not the target architecture.
+The application now builds as a full-stack OpenNext Worker with isolated local,
+preview, staging, and production configuration. The staging runtime is deployed
+at [encounterizer-stg](https://encounterizer-stg.dnd-new-dawn-guild-assistant.workers.dev/),
+including live health/readiness APIs and a server-rendered `/status` page.
 
-The approved target is a full-stack Next.js application on Cloudflare Workers
-through OpenNext, with separate preview/staging and production resources. The
-runtime conversion, resource provisioning, data migration, production cutover,
-and Azure retirement are defined in the
-[Cloudflare Cloud-Native Roadmap](docs/cloudflare-cloud-native-roadmap.md).
+Developer, delivery, promotion, log, and rollback commands live in the
+[Cloudflare delivery runbook](docs/operations/cloudflare-delivery.md). The
+[Cloudflare Cloud-Native Roadmap](docs/cloudflare-cloud-native-roadmap.md)
+defines the remaining data migration and production cutover; Azure remains only
+as the temporary public-production baseline until CF-8.
 
 ## Releases
 

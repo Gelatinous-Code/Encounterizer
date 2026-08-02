@@ -9,6 +9,10 @@
 # next.js
 /.next/
 /out/
+/.open-next/
+/.wrangler/
+/.worker-test/
+/worker-startup.cpuprofile
 
 # production
 /build

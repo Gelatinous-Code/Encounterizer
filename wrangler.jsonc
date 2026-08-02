@@ -87,6 +87,18 @@
     },
     "production": {
       "name": "encounterizer-main",
+      "workers_dev": false,
+      "preview_urls": false,
+      "routes": [
+        {
+          "pattern": "encounterizer.com",
+          "custom_domain": true
+        },
+        {
+          "pattern": "www.encounterizer.com",
+          "custom_domain": true
+        }
+      ],
       "assets": {
         "directory": ".open-next/assets",
         "binding": "ASSETS"

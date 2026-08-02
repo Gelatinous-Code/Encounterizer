@@ -19,6 +19,10 @@ Bindings are repeated in every named Wrangler environment because binding and
 Object resources must follow the same pattern; a production resource ID must
 never appear under local, preview, or staging.
 
+Production owns the `encounterizer.com` and `www.encounterizer.com` Custom
+Domains. They are committed under `env.production.routes`; the production
+Worker does not expose its generic `workers.dev` hostname.
+
 ## Developer gate
 
 From a clean checkout on Node 24:

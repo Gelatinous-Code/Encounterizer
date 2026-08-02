@@ -11,6 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "baseline:cloud": "tsx scripts/cloud-baseline.ts",
+    "baseline:cloud:check": "tsx scripts/cloud-baseline.ts --check",
     "import:bestiary": "tsx scripts/import-bestiary.ts",
     "import:srd": "tsx scripts/import-srd-content.ts",
     "srd:check": "tsx scripts/srd-md/audit.ts --check",

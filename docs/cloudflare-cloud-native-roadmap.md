@@ -81,6 +81,9 @@ the first background workload in CF-5 has a stable input/output contract.
 
 ## CF-0 — Cloud Architecture & Delivery Contracts
 
+The accepted implementation contracts and repeatable baseline are indexed in
+[`docs/architecture/README.md`](architecture/README.md).
+
 ### Outcome
 
 The team can implement the platform without reopening foundational decisions in

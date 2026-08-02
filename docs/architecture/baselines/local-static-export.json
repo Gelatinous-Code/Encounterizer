@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-08-02T03:20:42.693Z",
+  "runtime": {
+    "node": "v24.18.1",
+    "platform": "win32",
+    "architecture": "x64"
+  },
+  "corpus": {
+    "monsters": 331
+  },
+  "deterministic": {
+    "encounterSha256": "056cfd7a18784b8bffe25923a483173f335f78a30794a1edc15ac6f8c835ee19",
+    "simulationSha256": "180dca36069279557ad1a348db859d5e24bc7e88ba08f2c397e1310cd6f16d22",
+    "searchSha256": "eb468a5e7b8cf911ba905b317ebb3042547c9d5cbbf72c0fe7241512e4095da8",
+    "searchResultCount": 1
+  },
+  "workloads": {
+    "encounterGeneration": {
+      "iterations": 250,
+      "totalMs": 17.705,
+      "meanMs": 0.071,
+      "p50Ms": 0.062,
+      "p95Ms": 0.136
+    },
+    "battleSimulation": {
+      "iterations": 5,
+      "totalMs": 13.765,
+      "meanMs": 2.753,
+      "p50Ms": 2.656,
+      "p95Ms": 2.971
+    },
+    "catalogSearch": {
+      "iterations": 1000,
+      "totalMs": 47.823,
+      "meanMs": 0.048,
+      "p50Ms": 0.04,
+      "p95Ms": 0.101
+    }
+  },
+  "bundle": {
+    "staticExportBytes": 95937146,
+    "nextStaticBytes": 5549613,
+    "javascriptBytes": 5022357,
+    "cssBytes": 89233
+  },
+  "pageLoad": {
+    "route": "/",
+    "samples": 10,
+    "documentP50Ms": 6.327,
+    "documentP95Ms": 10.584,
+    "pageP50Ms": 18.192,
+    "pageP95Ms": 30.269,
+    "htmlBytes": 73090,
+    "criticalAssetCount": 15,
+    "criticalAssetBytes": 860978
+  }
+}

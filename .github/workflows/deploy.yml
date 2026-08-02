@@ -1,24 +1,31 @@
-name: Deploy
-
-# Deploys the static export to Azure Static Web Apps on every push to the
-# default branch. We build in this workflow (skip_app_build) so the deploy
-# uses the exact same Node version and lockfile as CI, instead of letting
-# SWA's Oryx builder auto-detect Next.js and try a hybrid build.
-#
-# One-time setup (see README "Deployment"):
-#   1. Azure Portal → Create Static Web App → plan Free → source "Other"
-#   2. Repo Settings → Actions → secret AZURE_STATIC_WEB_APPS_API_TOKEN
-#      (from the SWA "Manage deployment token" page)
-#   3. Repo Settings → Actions → variable SITE_URL (the SWA URL)
+name: Cloudflare Delivery
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      promote_to_production:
+        description: Promote the staging-verified artifact to production
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-delivery
+  cancel-in-progress: false
 
 jobs:
-  deploy:
+  staging:
+    if: github.event_name == 'workflow_dispatch' || vars.CLOUDFLARE_DELIVERY_ENABLED == 'true'
     runs-on: ubuntu-latest
+    environment: staging
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -30,15 +37,59 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build static export
-        run: npm run build
-        env:
-          NEXT_PUBLIC_SITE_URL: ${{ vars.SITE_URL }}
+      - name: Verify generated bindings
+        run: npm run cf:typegen:check
 
-      - name: Deploy to Azure Static Web Apps
-        uses: Azure/static-web-apps-deploy@v1
+      - name: Build exact OpenNext artifact
+        run: npm run cf:build
+
+      - name: Test artifact inside workerd
+        run: npm run cf:test
+
+      - name: Deploy staging
+        run: npm run cf:deploy:staging
+
+      - name: Smoke-test staging
+        if: vars.CLOUDFLARE_STAGING_URL != ''
+        run: curl --fail --retry 4 --retry-all-errors "${{ vars.CLOUDFLARE_STAGING_URL }}/api/v1/system/readiness"
+
+      - name: Retain verified artifact for promotion
+        uses: actions/upload-artifact@v4
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          action: upload
-          app_location: out
-          skip_app_build: true
+          name: open-next-${{ github.sha }}
+          path: |
+            .open-next
+            .wrangler/deploy
+          include-hidden-files: true
+          retention-days: 14
+
+  production:
+    if: github.event_name == 'workflow_dispatch' && inputs.promote_to_production
+    needs: staging
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install deployment tooling
+        run: npm ci
+
+      - name: Download the staging-verified artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: open-next-${{ github.sha }}
+
+      - name: Deploy production
+        run: npm run cf:deploy:production
+
+      - name: Smoke-test production
+        if: vars.CLOUDFLARE_PRODUCTION_URL != ''
+        run: curl --fail --retry 4 --retry-all-errors "${{ vars.CLOUDFLARE_PRODUCTION_URL }}/api/v1/system/readiness"

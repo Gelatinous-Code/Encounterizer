@@ -5,5 +5,13 @@ import coreWebVitals from 'eslint-config-next/core-web-vitals';
 // base, TypeScript, and Core Web Vitals rule sets for Next.js 16.
 export default defineConfig([
   ...coreWebVitals,
-  globalIgnores(['.next/**', 'out/**', 'next-env.d.ts']),
+  globalIgnores([
+    '.next/**',
+    '.open-next/**',
+    '.worker-test/**',
+    '.wrangler/**',
+    'out/**',
+    'next-env.d.ts',
+    'cloudflare-env.d.ts',
+  ]),
 ]);

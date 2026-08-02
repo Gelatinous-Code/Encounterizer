@@ -10,9 +10,9 @@
 | Target | Worker | Runtime variable | Persistent-data rule |
 |---|---|---|---|
 | Local | `encounterizer-local` | `APP_ENV=local` | Local emulation and committed fixtures only |
-| Pull-request preview | `encounterizer` version preview | `APP_ENV=preview` | No production bindings or data |
+| Pull-request preview | `encounterizer-main` version preview | `APP_ENV=preview` | No production bindings or data; never promoted automatically |
 | Staging | `encounterizer-stg` | `APP_ENV=staging` | Dedicated non-production bindings and secrets only |
-| Production | `encounterizer-prod` | `APP_ENV=production` | Production bindings and secrets only |
+| Production | `encounterizer-main` | `APP_ENV=production` | Production bindings and secrets only; receives an approved version promotion |
 
 Bindings are repeated in every named Wrangler environment because binding and
 `vars` configuration is not inherited. Future D1, R2, KV, Queue, and Durable
@@ -49,9 +49,10 @@ supported Next/OpenNext line accepts Sharp 0.35 or later.
 
 ## Pull-request previews
 
-The repository-connected Cloudflare Worker is the non-production
-`encounterizer` preview Worker. In **Workers & Pages → encounterizer → Settings
-→ Build**, use these committed commands:
+The repository-connected Cloudflare Worker is `encounterizer-main`. Pull-request
+builds upload non-production versions to that Worker without promoting them. In
+**Workers & Pages → encounterizer-main → Settings → Build**, use these committed
+commands:
 
 | Setting | Value |
 |---|---|
@@ -61,8 +62,10 @@ The repository-connected Cloudflare Worker is the non-production
 | Production branch | `main` |
 
 Uploading a version produces a versioned preview URL without promoting it to a
-live production deployment. The Worker name in the dashboard must remain equal
-to the top-level Wrangler name (`encounterizer`).
+live production deployment. Pull-request previews and production are immutable
+versions of the same Worker; only the protected production job may promote a
+version to active traffic. The Worker name in the dashboard must remain equal
+to the top-level Wrangler name (`encounterizer-main`).
 
 ## Staging and production
 

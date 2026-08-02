@@ -10,9 +10,9 @@
 | Environment | Worker | Data rule | Promotion |
 |---|---|---|---|
 | Local | `encounterizer-local` through Wrangler/Miniflare | Local bindings and seeded fixtures only | Developer checks |
-| Pull request | `encounterizer-pr-<number>` | Ephemeral or test-only resources; authentication providers use preview callbacks; never production bindings | Automated preview after checks |
+| Pull request | `encounterizer-main` version preview | Ephemeral or test-only resources; authentication providers use preview callbacks; never production bindings | Automated version upload after checks; never promoted automatically |
 | Staging | `encounterizer-stg` | Dedicated non-production D1, R2, KV, queues, DO namespaces, secrets, hostnames, and test accounts | Main-branch deployment; smoke and migration checks |
-| Production | `encounterizer-prod` | Dedicated production bindings and secrets with least-privilege CI access | Protected environment approval after staging |
+| Production | `encounterizer-main` | Dedicated production bindings and secrets with least-privilege CI access | Protected environment approval after staging |
 
 Resource names use `encounterizer-<env>-<purpose>`, for example
 `encounterizer-prod-app`, `encounterizer-prod-primary`, and

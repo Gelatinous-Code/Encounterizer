@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "encounterizer",
+  "name": "encounterizer-main",
   "main": "worker.ts",
   "compatibility_date": "2026-08-01",
   "compatibility_flags": ["nodejs_compat"],
@@ -86,7 +86,7 @@
       }
     },
     "production": {
-      "name": "encounterizer-prod",
+      "name": "encounterizer-main",
       "assets": {
         "directory": ".open-next/assets",
         "binding": "ASSETS"

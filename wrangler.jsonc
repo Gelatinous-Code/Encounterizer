@@ -47,6 +47,7 @@
     "AUTH_ORIGIN": "https://encounterizer-main.dnd-new-dawn-guild-assistant.workers.dev",
     "AUTH_ALLOWED_HOSTS": "encounterizer-main.dnd-new-dawn-guild-assistant.workers.dev,*.encounterizer-main.dnd-new-dawn-guild-assistant.workers.dev",
     "AUTH_TRUSTED_ORIGINS": "https://encounterizer-main.dnd-new-dawn-guild-assistant.workers.dev",
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAEEreFYzlPPs90Mw",
     "TURNSTILE_HOSTNAMES": "encounterizer-main.dnd-new-dawn-guild-assistant.workers.dev"
   },
   "env": {
@@ -146,6 +147,7 @@
         "AUTH_ORIGIN": "https://encounterizer-stg.dnd-new-dawn-guild-assistant.workers.dev",
         "AUTH_ALLOWED_HOSTS": "encounterizer-stg.dnd-new-dawn-guild-assistant.workers.dev",
         "AUTH_TRUSTED_ORIGINS": "https://encounterizer-stg.dnd-new-dawn-guild-assistant.workers.dev",
+        "TURNSTILE_SITE_KEY": "0x4AAAAAAEEreFYzlPPs90Mw",
         "TURNSTILE_HOSTNAMES": "encounterizer-stg.dnd-new-dawn-guild-assistant.workers.dev"
       }
     },
@@ -207,6 +209,7 @@
         "AUTH_ORIGIN": "https://encounterizer.com",
         "AUTH_ALLOWED_HOSTS": "encounterizer.com,www.encounterizer.com",
         "AUTH_TRUSTED_ORIGINS": "https://encounterizer.com,https://www.encounterizer.com",
+        "TURNSTILE_SITE_KEY": "0x4AAAAAAEEreFYzlPPs90Mw",
         "TURNSTILE_HOSTNAMES": "encounterizer.com,www.encounterizer.com"
       }
     }

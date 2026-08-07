@@ -1,6 +1,6 @@
 {
   "name": "encounterizer",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "private": true,
   "description": "Free D&D 5.5e toolkit — encounter prep, live battle tools, and searchable SRD references",
   "scripts": {

@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.4.0](https://github.com/Gelatinous-Code/Encounterizer/compare/v1.3.0...v1.4.0) (2026-08-07)
+
+
+### Features
+
+* **cloud:** deliver CF-2 identity and campaigns ([9f2fb54](https://github.com/Gelatinous-Code/Encounterizer/commit/9f2fb546596faf4c8cf1400717b00269733e8354))
+* **cloud:** establish Cloudflare Worker foundation ([7d2d2f0](https://github.com/Gelatinous-Code/Encounterizer/commit/7d2d2f016fccbac2e68c3c61bca7524d2daee989))
+* establish CF-1 full-stack Worker foundation ([23dbfc4](https://github.com/Gelatinous-Code/Encounterizer/commit/23dbfc4e4fcad20359c8d56add418389666f8ce9))
+
+
+### Bug Fixes
+
+* **cloud:** align production Worker name ([c347a82](https://github.com/Gelatinous-Code/Encounterizer/commit/c347a8221f345b9c330bfa75ed6dec12eb53ab6a))
+* **cloud:** allow draft preview uploads ([2822013](https://github.com/Gelatinous-Code/Encounterizer/commit/282201323633c122dd20b50cd8c92f4597d30bc3))
+* **cloud:** codify production domains ([84ffc57](https://github.com/Gelatinous-Code/Encounterizer/commit/84ffc57122849aee0371b73a4ac8344c2ca5068f))
+* **cloud:** stabilize generated worker bindings ([b67e84e](https://github.com/Gelatinous-Code/Encounterizer/commit/b67e84e83b60b7c98699c00d20291d4cdcc3303a))
+
 ## [1.3.0](https://github.com/Daren9m/Encounterizer/compare/v1.2.0...v1.3.0) (2026-07-22)
 
 

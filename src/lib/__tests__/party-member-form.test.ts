@@ -99,12 +99,13 @@ describe('Party member form', () => {
   });
 
   it('omits baseline combat values so class scaling remains live', () => {
+    // Level-5 fighter baseline: +7 to hit (prof +3, Str 18) and 11 per hit.
     const normalized = normalizePartyCombatOverrides({
       ac: 18,
       maxHp: 44,
-      attackBonus: 8,
+      attackBonus: 7,
       attacksPerRound: 2,
-      avgDamagePerHit: 12,
+      avgDamagePerHit: 11,
       healingPerRound: 0,
       avgSpellDamagePerRound: 0,
       saveBonuses: { dex: 2, con: 6, wis: 2 },

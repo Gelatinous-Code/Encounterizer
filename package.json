@@ -81,7 +81,7 @@
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.112.3",
-    "@cloudflare/vitest-pool-workers": "^0.20.1",
+    "@cloudflare/vitest-pool-workers": "^0.20.3",
     "@cloudflare/workers-types": "^5.20260801.1",
     "@opennextjs/cloudflare": "^1.20.2",
     "@types/node": "^24.10.9",
@@ -91,13 +91,13 @@
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.2.12",
     "fake-indexeddb": "^6.2.5",
-    "postcss": "^8.5.19",
+    "postcss": "^8.5.26",
     "subset-font": "^2.5.0",
     "tailwindcss": "^3.4.0",
     "tsx": "^4.23.1",
     "typescript": "^5.6.0",
     "vitest": "^4.1.10",
-    "wrangler": "^4.118.0"
+    "wrangler": "^4.120.0"
   },
   "allowScripts": {
     "esbuild@0.25.4": true,

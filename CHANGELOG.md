@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.1](https://github.com/Gelatinous-Code/Encounterizer/compare/v1.4.0...v1.4.1) (2026-10-22)
+
+
+### Bug Fixes
+
+* **forecast:** scale class template offense by exact level ([3174bbd](https://github.com/Gelatinous-Code/Encounterizer/commit/3174bbda86dbbbfa380ce1d662fcb31a8ee03831))
+* **forecast:** scale class template offense by exact level ([14697e8](https://github.com/Gelatinous-Code/Encounterizer/commit/14697e884890c0831236b6133021267d87b0b2d7)), closes [#281](https://github.com/Gelatinous-Code/Encounterizer/issues/281)
+
 ## [1.4.0](https://github.com/Gelatinous-Code/Encounterizer/compare/v1.3.0...v1.4.0) (2026-08-07)
 
 
